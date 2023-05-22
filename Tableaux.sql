@@ -1,5 +1,6 @@
 DROP SCHEMA IF EXISTS BD_reservations cascade;
 CREATE SCHEMA BD_reservations;
+CREATE EXTENSION IF NOT EXISTS plpgsql;
 
 SET search_path = BD_reservations, pg_catalog;
 
@@ -271,6 +272,67 @@ values (true, 3035, 60, null, 'C1', 0110, null),
 INSERT INTO Qté_caract(quantité, id_local, id_pavillon, id_caract)
 values (6, 3035, 'C1', 22),
        (6, 3035, 'C1', 9);
+
+CREATE OR REPLACE FUNCTION reservation_insert_trigger()
+    RETURNS TRIGGER AS $$
+BEGIN
+INSERT INTO JournalEvenement(action, CIP, id_local, id_pavillon, date, intervalle, date_evenement)
+VALUES ('INSERT', NEW.CIP, NEW.id_local, NEW.id_pavillon, NEW.date, NEW.intervalle, CURRENT_TIMESTAMP);
+RETURN NEW;
+END;
+$$ LANGUAGE plpgsql ;
+
+CREATE OR REPLACE FUNCTION reservation_delete_trigger()
+    RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO JournalEvenement(action, CIP, id_local, id_pavillon, date, intervalle, date_evenement)
+    VALUES ('DELETE', NEW.CIP, NEW.id_local, NEW.id_pavillon, NEW.date, NEW.intervalle, CURRENT_TIMESTAMP);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql ;
+
+CREATE OR REPLACE FUNCTION reservation_update_trigger()
+    RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO JournalEvenement(action, CIP, id_local, id_pavillon, date, intervalle, date_evenement)
+    VALUES ('UPDATE', NEW.CIP, NEW.id_local, NEW.id_pavillon, NEW.date, NEW.intervalle, CURRENT_TIMESTAMP);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql ;
+
+CREATE TRIGGER Reservation_InsertTrigger
+    AFTER INSERT ON Réservation
+    FOR EACH ROW
+    EXECUTE FUNCTION reservation_insert_trigger();
+    END;
+
+CREATE TRIGGER Reservation_DeleteTrigger
+    AFTER INSERT ON Réservation
+    FOR EACH ROW
+EXECUTE FUNCTION reservation_delete_trigger();
+END;
+
+CREATE TRIGGER Reservation_UpdateTrigger
+    AFTER INSERT ON Réservation
+    FOR EACH ROW
+EXECUTE FUNCTION reservation_update_trigger();
+END;
+
+
+CREATE TABLE JournalEvenement(
+    CIP CHAR(8) NOT NULL ,
+    id_local INT NOT NULL ,
+    id_pavillon VARCHAR(2) NOT NULL ,
+    action CHAR(8) NOT NULL ,
+    date TIMESTAMP NOT NULL ,
+    intervalle INTERVAL NOT NULL ,
+    id_evenement INT PRIMARY KEY,
+    date_evenement TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (CIP) REFERENCES Membre(CIP),
+    FOREIGN KEY (id_local, id_pavillon) REFERENCES Local(id_local, id_pavillon)
+);
+
+
 
 CREATE TABLE Réservation
 (
