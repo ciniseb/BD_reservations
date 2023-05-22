@@ -307,13 +307,13 @@ CREATE TRIGGER Reservation_InsertTrigger
     END;
 
 CREATE TRIGGER Reservation_DeleteTrigger
-    AFTER INSERT ON Réservation
+    AFTER DELETE ON Réservation
     FOR EACH ROW
 EXECUTE FUNCTION reservation_delete_trigger();
 END;
 
 CREATE TRIGGER Reservation_UpdateTrigger
-    AFTER INSERT ON Réservation
+    AFTER UPDATE ON Réservation
     FOR EACH ROW
 EXECUTE FUNCTION reservation_update_trigger();
 END;
