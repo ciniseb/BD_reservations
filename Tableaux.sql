@@ -3,6 +3,8 @@ CREATE SCHEMA BD_reservations;
 
 SET search_path = BD_reservations, pg_catalog;
 
+--CREATE LANGUAGE plpgsql;
+
 CREATE TABLE Caractéristique
 (
     description VARCHAR(64) NOT NULL,
@@ -96,13 +98,14 @@ CREATE TABLE Statuts_membre
 CREATE TABLE Local
 (
     disponibilité BOOLEAN NOT NULL,
-    id_local VARCHAR(16) NOT NULL,
-    capacité INT NOT NULL,
-    notes TEXT,
     id_pavillon VARCHAR(2) NOT NULL,
+    id_local VARCHAR(16) NOT NULL,
+    sous_id_local VARCHAR(1),
+    capacité INT NOT NULL,
     id_catégorie INT NOT NULL,
-    sous_id_local VARCHAR(16),
-    PRIMARY KEY (id_local, id_pavillon),
+    notes TEXT,
+    --sous_id_pavillon VARCHAR(2),
+    PRIMARY KEY (id_pavillon, id_local),
     FOREIGN KEY (id_pavillon) REFERENCES Pavillon(id_pavillon),
     FOREIGN KEY (id_catégorie) REFERENCES Catégorie(id_catégorie),
     FOREIGN KEY (sous_id_local, id_pavillon) REFERENCES Local(id_local, id_pavillon)
@@ -112,7 +115,7 @@ CREATE TABLE Qté_caract
 (
     quantité INT NOT NULL,
     id_local VARCHAR(16) NOT NULL,
-    id_pavillon INT NOT NULL,
+    id_pavillon VARCHAR(2) NOT NULL,
     id_caract INT NOT NULL,
     PRIMARY KEY (id_local, id_pavillon, id_caract),
     FOREIGN KEY (id_local, id_pavillon) REFERENCES Local(id_local, id_pavillon),
@@ -130,6 +133,29 @@ CREATE TABLE Réservation
     FOREIGN KEY (CIP) REFERENCES Membre(CIP),
     FOREIGN KEY (id_local, id_pavillon) REFERENCES Local(id_local, id_pavillon)
 );
+
+CREATE OR REPLACE FUNCTION verifie_chevauchement()
+    RETURNS TRIGGER AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM Réservation
+        WHERE NEW.date >= date
+          AND NEW.date <= date + intervalle
+    ) THEN
+        RAISE EXCEPTION 'Interval conflict detected. The new element cannot be inserted.';
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE TRIGGER trigger_verifie_chevauchement
+    BEFORE INSERT ON Réservation
+    FOR EACH ROW
+EXECUTE FUNCTION verifie_chevauchement();
+
 
 --Insertions
 INSERT INTO Caractéristique(id_caract, description)
@@ -257,29 +283,20 @@ values ('Étudiant', 'stds2101'),
        ('Étudiant', 'boie0601'),
        ('Enseignant', 'boie0601');
 
-INSERT INTO Local(disponibilité, id_local, capacité, notes, id_pavillon, id_catégorie, sous_id_local)
-values (true, 3035, 60, null, 'C1', 0110, null),
-       (true, 3027, 40, '4 cubicules', 'C1', 0111, '3027-A'),
-       (true, 3027, 40, '4 cubicules', 'C1', 0111, '3027-B'),
-       (true, 3027, 40, '4 cubicules', 'C1', 0111, '3027-C'),
-       (true, 3027, 40, '4 cubicules', 'C1', 0111, '3027-D'),
-       (true, '3027-A', 10, null, 'C1', 0121, null),
-       (true, '3027-B', 10, null, 'C1', 0121, null),
-       (true, '3027-C', 10, null, 'C1', 0121, null),
-       (true, '3027-D', 10, null, 'C1', 0121, null);
+INSERT INTO Local(disponibilité, id_pavillon, id_local, sous_id_local, capacité, id_catégorie, notes)
+values (true, 'C1', 3035, null, 60, 0110, null);
+       --(true, 'C1', 3027, 'A', 40, 0111, '4 cubicules'),
+       --(true, 'C1', 3027, 'B', 40, 0111, '4 cubicules'),
+       --(true, 'C1', 3027, 'C', 40, 0111, '4 cubicules'),
+       --(true, 'C1', 3027, 'D', 40, 0111, '4 cubicules'),
+       --(true, 'C1', 'A', null, 10, 0121, null),
+       --(true, 'C1', 'B', null, 10, 0121, null),
+       --(true, 'C1', 'C', null, 10, 0121, null),
+       --(true, 'C1', 'D', null, 10, 0121, null);
 
 INSERT INTO Qté_caract(quantité, id_local, id_pavillon, id_caract)
 values (6, 3035, 'C1', 22),
        (6, 3035, 'C1', 9);
 
-CREATE TABLE Réservation
-(
-    date TIMESTAMP NOT NULL,
-    intervalle INTERVAL NOT NULL,
-    CIP CHAR(8) NOT NULL,
-    id_local INT NOT NULL,
-    id_pavillon VARCHAR(2) NOT NULL,
-    PRIMARY KEY (CIP, id_local, id_pavillon),
-    FOREIGN KEY (CIP) REFERENCES Membre(CIP),
-    FOREIGN KEY (id_local, id_pavillon) REFERENCES Local(id_local, id_pavillon)
-);
+--Demandes de réservations
+
