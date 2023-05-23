@@ -27,7 +27,22 @@ CREATE OR REPLACE FUNCTION Tableau6(debut timestamp, fin timestamp, Categorie In
     )
 
 As $$
+    DECLARE Categorie2 INT;
 BEGIN
+    if (Categorie = 0121)
+    then
+        Categorie2 = 120;
+    end if;
+
+    if(Categorie = 0110 or Categorie =0111 or Categorie = 0120 or Categorie =0121 or Categorie =0210
+        or Categorie =0211 or Categorie =0212 or Categorie =0213 or Categorie =0214  or Categorie =0215
+           or Categorie =0216 or Categorie =0217 or Categorie =0372 or Categorie =0373
+           or Categorie =0510 or Categorie =0620 or Categorie =0625 or Categorie =0640 or Categorie =0930 or Categorie =1030
+           or Categorie =1260)
+    then
+        Categorie2 = 0121;
+    end if;
+
     RETURN QUERY
         SELECT  generated_time, réservation.id_pavillon, réservation.id_local, réservation.cip, réservation.intervalle
         FROM bd_reservations.local, bd_reservations.réservation
@@ -39,11 +54,14 @@ BEGIN
                        ) AS generated_time
         ) AS time_series ON réservation.date <= generated_time AND generated_time <= réservation.date + réservation.intervalle
         where réservation.id_local = local.id_local and local.id_catégorie = Categorie and réservation.date <= generated_time AND generated_time <= réservation.date + réservation.intervalle
+        or réservation.id_local = local.id_local and local.id_catégorie = Categorie2 and réservation.date <= generated_time AND generated_time <= réservation.date + réservation.intervalle
         ORDER BY generated_time;
 END
 $$ language plpgsql;
 
 select * from Tableau6('2023-12-12 08:30:00', '2023-12-12 22:30:00', 0110);
+
+select * from Tableau6('2023-12-12 08:30:00', '2023-12-12 22:30:00', 0121);
 
 select * from Tableau6('2023-12-13 08:30:00', '2023-12-13 22:30:00', 0110);
 
