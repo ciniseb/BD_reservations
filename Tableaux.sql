@@ -144,11 +144,11 @@ CREATE TABLE JournalEvenement
     date TIMESTAMP NOT NULL,
     intervalle INTERVAL,
     action CHAR(8),
-    --id_evenement INT PRIMARY KEY,
-    date_evenement TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id_pavillon, id_local, CIP, date)
+    id_evenement SERIAL PRIMARY KEY,
+    date_evenement TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     --FOREIGN KEY (id_pavillon, id_local, CIP, date) REFERENCES Réservation(id_pavillon, id_local, CIP, date)
 );
+
 
 --Fonctions
 CREATE OR REPLACE FUNCTION verifie_chevauchement()
@@ -180,8 +180,8 @@ CREATE OR REPLACE FUNCTION reservation_delete_trigger()
     RETURNS TRIGGER AS $$
 BEGIN
     INSERT INTO JournalEvenement(action, CIP, id_local, id_pavillon, date, intervalle, date_evenement)
-    VALUES ('DELETE', NEW.CIP, NEW.id_local, NEW.id_pavillon, NEW.date, NEW.intervalle, CURRENT_TIMESTAMP);
-    RETURN NEW;
+    VALUES ('DELETE', OLD.CIP, OLD.id_local, OLD.id_pavillon, OLD.date, OLD.intervalle, CURRENT_TIMESTAMP);
+    RETURN OLD;
 END;
 $$ LANGUAGE plpgsql ;
 
@@ -345,8 +345,8 @@ values ('Étudiant', 'stds2101'),
        ('Enseignant', 'boie0601');
 
 INSERT INTO Local(disponibilité, id_pavillon, id_local, sous_id_local, capacité, id_catégorie, notes)
-values (true, 'C1', 3035, null, 60, 0110, null);
-values (true, 'C1', 3027, null, 60, 0110, null);
+values (true, 'C1', 3035, null, 60, 0110, null),
+         (true, 'C1', 3027, null, 60, 0110, null);
        --(true, 'C1', 3027, 'A', 40, 0111, '4 cubicules'),
        --(true, 'C1', 3027, 'B', 40, 0111, '4 cubicules'),
        --(true, 'C1', 3027, 'C', 40, 0111, '4 cubicules'),
@@ -363,8 +363,14 @@ values (6, 3035, 'C1', 22),
 --Demandes de réservations
 
 INSERT INTO Réservation(id_pavillon, id_local, CIP, date, intervalle)
-values ('C1', 3035, 'stds2101',  '2023-12-12 13:00:00', '1 hour');
+values ('C1', 3035, 'stds2101',  '2023-05-22 13:00:00', '1 hour');
 
 UPDATE  Réservation
 set id_local = '3027'
     WHERE id_local = '3035';
+
+DELETE FROM Réservation
+    WHERE id_local = '3027';
+
+INSERT INTO Réservation(id_pavillon, id_local, CIP, date, intervalle)
+values ('C1', 3027, 'stds2101',  '2023-05-22 13:00:00', '1 hour');
