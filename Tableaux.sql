@@ -102,15 +102,17 @@ CREATE TABLE Local
     disponibilité BOOLEAN NOT NULL,
     id_pavillon VARCHAR(2) NOT NULL,
     id_local VARCHAR(16) NOT NULL,
-    sous_id_local VARCHAR(1),
+    id_pavillon_parent VARCHAR(2) NULL,
+    id_local_parent VARCHAR(16) NULL,
     capacité INT NOT NULL,
     id_catégorie INT NOT NULL,
-    notes TEXT,
+    notes TEXT NULL,
     --sous_id_pavillon VARCHAR(2),
     PRIMARY KEY (id_pavillon, id_local),
+    UNIQUE (id_pavillon, id_local, id_pavillon_parent, id_local_parent),
     FOREIGN KEY (id_pavillon) REFERENCES Pavillon(id_pavillon),
     FOREIGN KEY (id_catégorie) REFERENCES Catégorie(id_catégorie),
-    FOREIGN KEY (sous_id_local, id_pavillon) REFERENCES Local(id_local, id_pavillon)
+    FOREIGN KEY (id_pavillon_parent, id_local_parent) REFERENCES Local(id_pavillon, id_local)
 );
 
 CREATE TABLE Qté_caract
@@ -128,12 +130,14 @@ CREATE TABLE Réservation
 (
     id_pavillon VARCHAR(2) NOT NULL,
     id_local VARCHAR(16) NOT NULL,
+    id_pavillon_parent VARCHAR(2) NULL,
+    id_local_parent VARCHAR(16) NULL,
     CIP CHAR(8) NOT NULL,
     date TIMESTAMP NOT NULL,
     intervalle INTERVAL NOT NULL,
     PRIMARY KEY (id_pavillon, id_local, CIP, date),
     FOREIGN KEY (CIP) REFERENCES Membre(CIP),
-    FOREIGN KEY (id_local, id_pavillon) REFERENCES Local(id_local, id_pavillon)
+    FOREIGN KEY (id_pavillon, id_local, id_pavillon_parent, id_local_parent) REFERENCES Local(id_pavillon, id_local, id_pavillon_parent, id_local_parent)
 );
 
 CREATE TABLE JournalEvenement
@@ -154,18 +158,67 @@ CREATE TABLE JournalEvenement
 CREATE OR REPLACE FUNCTION verifie_chevauchement()
     RETURNS TRIGGER AS $$
 BEGIN
-    IF EXISTS (
+    IF EXISTS
+        (
         SELECT 1
         FROM Réservation
-        WHERE NEW.date >= date
-          AND NEW.date <= date + intervalle
+        WHERE
+            (
+                (--Local déjà réservé
+                NEW.id_pavillon = id_pavillon
+                AND NEW.id_local = id_local
+                )
+            OR
+                (--Cubicule déjà réservé = pas de réservation du Local
+                NEW.id_pavillon = id_pavillon_parent
+                AND NEW.id_local = id_local_parent
+                )
+            OR
+                (--Local déjà réservé = pas de réservation du Cubicule
+                NEW.id_pavillon_parent = id_pavillon
+                AND NEW.id_local_parent = id_local
+                )
+            )
+          --Chevauchement
+          AND NEW.date < date + intervalle
+          AND NEW.date + NEW.intervalle > date
     ) THEN
-        RAISE EXCEPTION 'Interval conflict detected. The new element cannot be inserted.';
+        RETURN NULL;
     END IF;
 
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+/*CREATE OR REPLACE FUNCTION verifie_hiérarchie_local()
+    RETURNS TRIGGER AS $$
+BEGIN
+    IF EXISTS --Cubicule déjà réservé = pas de réservation du Local
+        (
+        SELECT 1
+        FROM Réservation
+        WHERE id_pavillon_parent = NEW.id_pavillon
+          AND id_local_parent = NEW.id_local
+          AND NEW.date < date + intervalle
+          AND NEW.date + NEW.intervalle > date
+    ) THEN
+        RETURN NULL;
+    END IF;
+    IF EXISTS --Local déjà réservé = pas de réservation du Cubicule
+        (
+            SELECT 1
+            FROM Réservation
+            WHERE id_pavillon = NEW.id_pavillon_parent
+              AND id_local = NEW.id_local_parent
+              AND NEW.date < date + intervalle
+              AND NEW.date + NEW.intervalle > date
+        ) THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;*/
 
 CREATE OR REPLACE FUNCTION reservation_insert_trigger()
     RETURNS TRIGGER AS $$
@@ -199,6 +252,11 @@ CREATE TRIGGER trigger_verifie_chevauchement
     BEFORE INSERT ON Réservation
     FOR EACH ROW
 EXECUTE FUNCTION verifie_chevauchement();
+
+/*CREATE TRIGGER trigger_verifie_hiérarchie_local
+    BEFORE INSERT ON Réservation
+    FOR EACH ROW
+EXECUTE FUNCTION verifie_hiérarchie_local();*/
 
 CREATE TRIGGER Reservation_InsertTrigger
     AFTER INSERT ON Réservation
@@ -344,17 +402,17 @@ values ('Étudiant', 'stds2101'),
        ('Étudiant', 'boie0601'),
        ('Enseignant', 'boie0601');
 
-INSERT INTO Local(disponibilité, id_pavillon, id_local, sous_id_local, capacité, id_catégorie, notes)
-values (true, 'C1', 3035, null, 60, 0110, null),
-         (true, 'C1', 3027, null, 60, 0110, null);
-       --(true, 'C1', 3027, 'A', 40, 0111, '4 cubicules'),
-       --(true, 'C1', 3027, 'B', 40, 0111, '4 cubicules'),
-       --(true, 'C1', 3027, 'C', 40, 0111, '4 cubicules'),
-       --(true, 'C1', 3027, 'D', 40, 0111, '4 cubicules'),
-       --(true, 'C1', 'A', null, 10, 0121, null),
-       --(true, 'C1', 'B', null, 10, 0121, null),
-       --(true, 'C1', 'C', null, 10, 0121, null),
-       --(true, 'C1', 'D', null, 10, 0121, null);
+INSERT INTO Local(disponibilité, id_pavillon, id_local, id_pavillon_parent, id_local_parent, capacité, id_catégorie, notes)
+values (true, 'C1', 3035, null, null, 60, 0110, null),
+       (true, 'C1', 3040, null, null, 60, 0110, null),
+       (true, 'C1', 3027, null, null, 40, 0111, '4 cubicules'),
+       (true, 'C1', '3027-A', 'C1', 3027, 10, 0121, null),
+       (true, 'C1', '3027-B', 'C1', 3027, 10, 0121, null),
+       (true, 'C1', '3027-C', 'C1', 3027, 10, 0121, null),
+       (true, 'C1', '3027-D', 'C1', 3027, 10, 0121, null),
+       (true, 'C1', 3032, null, null, 20, 0111, '2 cubicules'),
+       (true, 'C1', '3032-A', 'C1', 3032, 10, 0121, null),
+       (true, 'C1', '3032-B', 'C1', 3032, 10, 0121, null);
 
 INSERT INTO Qté_caract(quantité, id_local, id_pavillon, id_caract)
 values (6, 3035, 'C1', 22),
@@ -363,9 +421,26 @@ values (6, 3035, 'C1', 22),
 --Demandes de réservations
 
 INSERT INTO Réservation(id_pavillon, id_local, CIP, date, intervalle)
-values ('C1', 3035, 'stds2101',  '2023-05-22 13:00:00', '1 hour');
+values ('C1', 3035, 'stds2101',  '2023-12-12 13:00:00', '1 hour'), --Passe
+       ('C1', 3035, 'boie0601',  '2023-12-12 13:00:00', '1 hour'),
+       ('C1', 3040, 'stds2101',  '2023-12-12 13:00:00', '1 hour'), --Passe
+       ('C1', 3040, 'boie0601',  '2023-12-12 13:30:00', '1 hour'),
+       ('C1', 3040, 'boie0601',  '2023-12-12 12:30:00', '1 hour'),
+       ('C1', 3040, 'stds2101',  '2023-12-12 13:30:00', '30 minutes'),
+       ('C1', 3040, 'stds2101',  '2023-12-12 14:00:00', '30 minutes'), --Passe
+       ('C1', 3040, 'stds2101',  '2023-12-12 12:30:00', '30 minutes'); --Passe
 
-UPDATE  Réservation
+INSERT INTO Réservation(id_pavillon, id_local, id_pavillon_parent, id_local_parent, CIP, date, intervalle)
+values ('C1', 3027, null, null, 'stds2101',  '2023-12-12 13:00:00', '1 hour'), --Passe
+       ('C1', 3027, null, null, 'boie0601',  '2023-12-12 13:00:00', '1 hour'),
+       ('C1', '3027-C', 'C1', 3027, 'boie0601',  '2023-12-12 12:30:00', '1 hour'),
+       ('C1', '3027-C', 'C1', 3027, 'boie0601',  '2023-12-12 14:00:00', '1 hour'), --Passe
+       ('C1', '3027-A', 'C1', 3027, 'stds2101',  '2023-12-12 14:30:00', '1 hour'), --Passe
+       ('C1', '3032-A', 'C1', 3032, 'boie0601',  '2023-12-12 13:00:00', '1 hour'), --Passe
+       ('C1', 3027, null, null, 'boie0601',  '2023-12-12 14:30:00', '1 hour'),
+       ('C1', 3027, null, null, 'boie0601',  '2023-12-12 16:30:00', '1 hour'); --Passe
+
+/*UPDATE  Réservation
 set id_local = '3027'
     WHERE id_local = '3035';
 
@@ -374,4 +449,4 @@ DELETE FROM Réservation
 
 INSERT INTO Réservation(id_pavillon, id_local, CIP, date, intervalle)
 values ('C1', 3027, 'stds2101',  '2023-05-22 09:00:00', '1 hour'),
-       ('C1', 3035, 'boie0601', '2023-05-22 15:00:00', '3 hour');
+       ('C1', 3035, 'boie0601', '2023-05-22 15:00:00', '3 hour');*/
