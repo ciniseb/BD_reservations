@@ -99,7 +99,6 @@ CREATE TABLE Statuts_membre
 
 CREATE TABLE Local
 (
-    disponibilité BOOLEAN NOT NULL,
     id_pavillon VARCHAR(2) NOT NULL,
     id_local VARCHAR(16) NOT NULL,
     id_pavillon_parent VARCHAR(2) NULL,
@@ -248,8 +247,13 @@ END;
 $$ LANGUAGE plpgsql ;
 
 --Triggers
-CREATE TRIGGER trigger_verifie_chevauchement
+CREATE TRIGGER trigger_insert_verifie_chevauchement
     BEFORE INSERT ON Réservation
+    FOR EACH ROW
+EXECUTE FUNCTION verifie_chevauchement();
+
+CREATE TRIGGER trigger_update_verifie_chevauchement
+    BEFORE UPDATE ON Réservation
     FOR EACH ROW
 EXECUTE FUNCTION verifie_chevauchement();
 
@@ -402,17 +406,20 @@ values ('Étudiant', 'stds2101'),
        ('Étudiant', 'boie0601'),
        ('Enseignant', 'boie0601');
 
-INSERT INTO Local(disponibilité, id_pavillon, id_local, id_pavillon_parent, id_local_parent, capacité, id_catégorie, notes)
-values (true, 'C1', 3035, null, null, 60, 0110, null),
-       (true, 'C1', 3040, null, null, 60, 0110, null),
-       (true, 'C1', 3027, null, null, 40, 0111, '4 cubicules'),
-       (true, 'C1', '3027-A', 'C1', 3027, 10, 0121, null),
-       (true, 'C1', '3027-B', 'C1', 3027, 10, 0121, null),
-       (true, 'C1', '3027-C', 'C1', 3027, 10, 0121, null),
-       (true, 'C1', '3027-D', 'C1', 3027, 10, 0121, null),
-       (true, 'C1', 3032, null, null, 20, 0111, '2 cubicules'),
-       (true, 'C1', '3032-A', 'C1', 3032, 10, 0121, null),
-       (true, 'C1', '3032-B', 'C1', 3032, 10, 0121, null);
+INSERT INTO Local(id_pavillon, id_local, id_pavillon_parent, id_local_parent, capacité, id_catégorie, notes)
+values ('C1', 3035, null, null, 60, 0110, null),
+       ('C1', 3040, null, null, 60, 0110, null),
+       ('C1', 3027, null, null, 40, 0111, '4 cubicules'),
+       ('C1', '3027-A', 'C1', 3027, 10, 0121, null),
+       ('C1', '3027-B', 'C1', 3027, 10, 0121, null),
+       ('C1', '3027-C', 'C1', 3027, 10, 0121, null),
+       ('C1', '3027-D', 'C1', 3027, 10, 0121, null),
+       ('C1', 3032, null, null, 20, 0111, '2 cubicules'),
+       ('C1', '3032-A', 'C1', 3032, 10, 0121, null),
+       ('C1', '3032-B', 'C1', 3032, 10, 0121, null),
+       ('C2', 3032, null, null, 20, 0111, '2 cubicules'),
+       ('C2', '3032-A', 'C2', 3032, 10, 0121, null),
+       ('C2', '3032-B', 'C2', 3032, 10, 0121, null);
 
 INSERT INTO Qté_caract(quantité, id_local, id_pavillon, id_caract)
 values (6, 3035, 'C1', 22),
@@ -420,18 +427,19 @@ values (6, 3035, 'C1', 22),
 
 --Demandes de réservations
 
-INSERT INTO Réservation(id_pavillon, id_local, CIP, date, intervalle)
-values ('C1', 3035, 'stds2101',  '2023-12-12 13:00:00', '1 hour'), --Passe
-       ('C1', 3035, 'boie0601',  '2023-12-12 13:00:00', '1 hour'),
-       ('C1', 3040, 'boie0601',  '2023-12-12 13:00:00', '1 hour'), --Passe
-       ('C1', 3040, 'boie0601',  '2023-12-12 13:30:00', '1 hour'),
-       ('C1', 3040, 'boie0601',  '2023-12-12 12:30:00', '1 hour'),
-       ('C1', 3040, 'stds2101',  '2023-12-12 13:30:00', '30 minutes'),
-       ('C1', 3040, 'stds2101',  '2023-12-12 14:00:00', '30 minutes'), --Passe
-       ('C1', 3040, 'stds2101',  '2023-12-12 12:30:00', '30 minutes'), --Passe
-       ('C1', 3040, 'stds2101',  '2023-12-13 12:30:00', '45 minutes'), --Passe
-       ('C2', 3032, 'boie0601',  '2023-12-13 14:30:00', '3 hours'),
-       ('C2', '3032-A', 'boie0601',  '2023-12-13 12:30:00', '3 hours');
+INSERT INTO Réservation(id_pavillon, id_local, id_pavillon_parent, id_local_parent, CIP, date, intervalle)
+values ('C1', 3035, null, null, 'stds2101',  '2023-12-12 13:00:00', '1 hour'), --Passe
+       ('C1', 3035, null, null, 'boie0601',  '2023-12-12 13:00:00', '1 hour'),
+       ('C1', 3040, null, null, 'boie0601',  '2023-12-12 13:00:00', '1 hour'), --Passe
+       ('C1', 3040, null, null, 'boie0601',  '2023-12-12 13:30:00', '1 hour'),
+       ('C1', 3040, null, null, 'boie0601',  '2023-12-12 12:30:00', '1 hour'),
+       ('C1', 3040, null, null, 'stds2101',  '2023-12-12 13:30:00', '30 minutes'),
+       ('C1', 3040, null, null, 'stds2101',  '2023-12-12 14:00:00', '30 minutes'), --Passe
+       ('C1', 3040, null, null, 'stds2101',  '2023-12-12 12:30:00', '30 minutes'), --Passe
+       ('C1', 3040, null, null, 'boie0601',  '2023-12-12 12:30:00', '45 minutes'),
+       ('C1', 3040, null, null, 'boie0601',  '2023-12-13 12:30:00', '45 minutes'), --Passe
+       ('C2', 3032, null, null, 'boie0601',  '2023-12-13 14:30:00', '3 hours'), --Passe mais devient 2027
+       ('C2', '3032-A', 'C2', 3032, 'boie0601',  '2023-12-13 12:30:00', '1 hour'); --Passe mais delete
 
 
 INSERT INTO Réservation(id_pavillon, id_local, id_pavillon_parent, id_local_parent, CIP, date, intervalle)
@@ -446,7 +454,7 @@ values ('C1', 3027, null, null, 'stds2101',  '2023-12-12 13:00:00', '1 hour'), -
 
 UPDATE  Réservation
 set id_local = '3027'
-    WHERE id_local = '3032';
+    WHERE id_pavillon = 'C2' AND id_local = '3032';
 
 DELETE FROM Réservation
-    WHERE id_local = '3032-A';
+    WHERE id_pavillon_parent = 'C2' AND id_local_parent = '3032';
