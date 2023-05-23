@@ -403,16 +403,19 @@ values ('Étudiant', 'stds2101'),
        ('Enseignant', 'boie0601');
 
 INSERT INTO Local(disponibilité, id_pavillon, id_local, id_pavillon_parent, id_local_parent, capacité, id_catégorie, notes)
-values (true, 'C1', 3035, null, null, 60, 0110, null),
-       (true, 'C1', 3040, null, null, 60, 0110, null),
-       (true, 'C1', 3027, null, null, 40, 0111, '4 cubicules'),
-       (true, 'C1', '3027-A', 'C1', 3027, 10, 0121, null),
-       (true, 'C1', '3027-B', 'C1', 3027, 10, 0121, null),
-       (true, 'C1', '3027-C', 'C1', 3027, 10, 0121, null),
-       (true, 'C1', '3027-D', 'C1', 3027, 10, 0121, null),
-       (true, 'C1', 3032, null, null, 20, 0111, '2 cubicules'),
-       (true, 'C1', '3032-A', 'C1', 3032, 10, 0121, null),
-       (true, 'C1', '3032-B', 'C1', 3032, 10, 0121, null);
+values ('C1', 3035, null, null, 60, 0110, null),
+       ('C1', 3040, null, null, 60, 0110, null),
+       ('C1', 3027, null, null, 40, 0111, '4 cubicules'),
+       ('C1', '3027-A', 'C1', 3027, 10, 0121, null),
+       ('C1', '3027-B', 'C1', 3027, 10, 0121, null),
+       ('C1', '3027-C', 'C1', 3027, 10, 0121, null),
+       ('C1', '3027-D', 'C1', 3027, 10, 0121, null),
+       ('C1', 3032, null, null, 20, 0111, '2 cubicules'),
+       ('C1', '3032-A', 'C1', 3032, 10, 0121, null),
+       ('C1', '3032-B', 'C1', 3032, 10, 0121, null),
+       ('C2', 3032, null, null, 20, 0111, '2 cubicules'),
+       ('C2', '3032-A', 'C2', 3032, 10, 0121, null),
+       ('C2', '3032-B', 'C2', 3032, 10, 0121, null);
 
 INSERT INTO Qté_caract(quantité, id_local, id_pavillon, id_caract)
 values (6, 3035, 'C1', 22),
