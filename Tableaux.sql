@@ -447,7 +447,7 @@ values ('C1', 3027, null, null, 'stds2101',  '2023-12-12 13:00:00', '1 hour'), -
 
 UPDATE  Réservation
 set id_local = '3027'
-    WHERE id_local = '3032';
+WHERE id_pavillon = 'C2' AND id_local = '3032';
 
 DELETE FROM Réservation
-    WHERE id_local = '3032-A';
+WHERE id_pavillon_parent = 'C2' AND id_local_parent = '3032';
