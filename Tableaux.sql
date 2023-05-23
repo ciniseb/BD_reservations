@@ -428,7 +428,9 @@ values ('C1', 3035, 'stds2101',  '2023-12-12 13:00:00', '1 hour'), --Passe
        ('C1', 3040, 'boie0601',  '2023-12-12 12:30:00', '1 hour'),
        ('C1', 3040, 'stds2101',  '2023-12-12 13:30:00', '30 minutes'),
        ('C1', 3040, 'stds2101',  '2023-12-12 14:00:00', '30 minutes'), --Passe
-       ('C1', 3040, 'stds2101',  '2023-12-12 12:30:00', '30 minutes'); --Passe
+       ('C1', 3040, 'stds2101',  '2023-12-12 12:30:00', '30 minutes'), --Passe
+       ('C1', 3040, 'stds2101',  '2023-12-13 12:30:00', '45 minutes'); --Passe
+
 
 INSERT INTO Réservation(id_pavillon, id_local, id_pavillon_parent, id_local_parent, CIP, date, intervalle)
 values ('C1', 3027, null, null, 'stds2101',  '2023-12-12 13:00:00', '1 hour'), --Passe
