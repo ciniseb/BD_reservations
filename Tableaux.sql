@@ -373,4 +373,5 @@ DELETE FROM Réservation
     WHERE id_local = '3027';
 
 INSERT INTO Réservation(id_pavillon, id_local, CIP, date, intervalle)
-values ('C1', 3027, 'stds2101',  '2023-05-22 13:00:00', '1 hour');
+values ('C1', 3027, 'stds2101',  '2023-05-22 09:00:00', '1 hour'),
+       ('C1', 3035, 'boie0601', '2023-05-22 15:00:00', '3 hour');
