@@ -17,18 +17,6 @@ select *
 from bd_reservations.réservation, bd_reservations.local
 where id_catégorie = 0110;
 
-SELECT  réservation.date, réservation.id_local, réservation.intervalle, réservation.cip, réservation.id_pavillon
-FROM bd_reservations.local, bd_reservations.réservation
-Full OUTER JOIN (
-    SELECT generate_series(
-                   '2023-05-22 08:30:00'::timestamp,
-                   '2023-05-22 22:30:00'::timestamp,
-                   '15 minutes'
-               ) AS generated_time
-) AS time_series ON date <= generated_time AND generated_time <= date + intervalle
-where réservation.id_local = local.id_local and local.id_catégorie = 0110
-ORDER BY generated_time;
-
 CREATE OR REPLACE FUNCTION Tableau6(debut timestamp, fin timestamp, Categorie Int)
     RETURNS TABLE(
     date TIMESTAMP,
@@ -57,9 +45,5 @@ $$ language plpgsql;
 
 select * from Tableau6('2023-12-12 08:30:00', '2023-12-12 22:30:00', 0110);
 
-/*select réservation.id_pavillon, réservation.id_local, réservation.cip, réservation.date, réservation.intervalle
-from réservation, local
-where réservation.date <= debut
-  and réservation.date + réservation.intervalle = fin
-  and réservation.id_local = local.id_local
-  and Categorie = id_catégorie;*/
+select * from Tableau6('2023-12-13 08:30:00', '2023-12-13 22:30:00', 0110);
+
