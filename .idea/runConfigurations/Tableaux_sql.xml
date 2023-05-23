@@ -1,0 +1,8 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Tableaux.sql" type="DatabaseScript" editBeforeRun="true" nameIsGenerated="true">
+    <script-file value="$PROJECT_DIR$/Tableaux.sql" />
+    <script-mode>FILE</script-mode>
+    <data-source id="ba55b96c-ddba-4c74-8fe9-7294c90a715a" namespace="database/&quot;postgres&quot;/schema/&quot;BD_reservations&quot;" />
+    <method v="2" />
+  </configuration>
+</component>

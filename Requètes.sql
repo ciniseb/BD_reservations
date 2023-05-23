@@ -1,13 +1,13 @@
-SET search_path = BD_reservations, pg_catalog;
+SET search_path = bd_reservations, pg_catalog;
 
 SELECT *
-    FROM Local;
+    FROM bd_reservations.Local;
 
 SELECT *
-    FROM qté_caract;
+    FROM bd_reservations.qté_caract;
 
 SELECT *
-    FROM réservation;
+    FROM bd_reservations.réservation;
 
 SELECT *
-    FROM journalevenement;
+    FROM bd_reservations.journalevenement;
